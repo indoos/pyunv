@@ -51,8 +51,10 @@
     % endfor
 
     Links
-    
-        (pyunv does not support links yet)
+
+    % for link in universe.links:
+        ${link.name}   id: ${link.id_}, description: ${link.description}, linked_universe: ${link.linked_universe}
+    % endfor
 
     Objects
     % for uclass in universe.classes:
@@ -83,8 +85,10 @@
         % endfor
     </%def>
     Hierarchies
-    
-        (pyunv does not support hierarchies yet)
+
+    % for hierarchy in universe.hierarchies:
+        ${hierarchy.name}   id: ${hierarchy.id_}, description: ${hierarchy.description}, levels: ${hierarchy.levels}
+    % endfor
 
     Tables
 

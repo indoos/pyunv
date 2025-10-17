@@ -13,7 +13,7 @@ import os
 import re
 import sys
 import collections
-__version__ = "0.3.0"
+from pyunv import __version__
 
 
 class Universe(object):
@@ -72,34 +72,6 @@ class Universe(object):
         self.upward_override = None
         self.upward_override_new = None
         self.windows_page_format = None
-        # Parsed UNW_Storage data
-        self.unw_connection_info = None
-        self.unw_connection_map_parameters = None
-        self.unw_contexts = None
-        self.unw_crystal_references = None
-        self.unw_custom_lov = []
-        self.unw_dot_tables = None
-        self.unw_dynamic_classes_descriptions = None
-        self.unw_dynamic_objects_descriptions = None
-        self.unw_dynamic_properties_descriptions = None
-        self.unw_fc_information = None
-        self.unw_graphical_comments = None
-        self.unw_hidden_items = []
-        self.unw_hierarchies = None
-        self.unw_input_columns = None
-        self.unw_joins = None
-        self.unw_objects_formats = {}
-        self.unw_parameters = {}
-        self.unw_tables = None
-        self.unw_upward_aggregate_aware = None
-        # Parsed ResourceHeader data
-        self.resource_descriptor = None
-        self.resource_b_descriptor = None
-        self.resource_t_descriptor = None
-        # Analysis data
-        self.cross_references = {}
-        self.validation_errors = []
-        self.dependency_graph = {}
         self.table_map = collections.defaultdict(Table.unknown)
         self.object_map = collections.defaultdict(Object.unknown)
 

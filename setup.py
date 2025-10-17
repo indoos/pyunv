@@ -9,6 +9,7 @@
 #    python setup.py py2exe
 #
 #  Copyright (c) 2009 David Peckham
+#  Enhanced by Sanjay Sharma (indoos@gmail.com) 2025-10-17.
 #
 
 from pyunv import __version__ as pyunv_version
@@ -20,8 +21,8 @@ import sys
 from setuptools import setup, find_packages
 from distutils.errors import *
 
-if sys.version_info < (2, 6):
-    raise DistutilsError, "This package requires Python 2.6 or later"
+if sys.version_info < (3, 6):
+    raise DistutilsError("This package requires Python 3.6 or later")
 
 if sys.platform[:3] == "win":
     import py2exe
@@ -37,8 +38,8 @@ CLASSIFIERS = [
     'Topic :: Software Development :: Libraries :: Python Modules',
 ]
 
-description = open("README.txt", "U").read().strip()
-changes = open("CHANGES.txt", "U").read().strip()
+description = open("README.txt").read().strip()
+changes = open("CHANGES.txt").read().strip()
 
 LONG_DESCRIPTION = description + '\n\n' + changes
 

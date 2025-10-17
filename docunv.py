@@ -5,6 +5,8 @@ docunv.py
 
 Created by David Peckham on 2009-10-24.
 Copyright (c) 2009 David Peckham. All rights reserved.
+
+Enhanced by Sanjay Sharma (indoos@gmail.com) 2025-10-17.
 """
 
 import sys
@@ -50,7 +52,7 @@ def main(argv=None):
     try:
         try:
             opts, args = getopt.getopt(argv[1:], "hm:t:v", ["help", "manifest=", "template="])
-        except getopt.error, msg:
+        except getopt.error as msg:
             raise Usage(msg)
         
         if len(args) == 0:
@@ -87,15 +89,15 @@ def main(argv=None):
             with open(manifest_filename, 'w') as manifest_file:
                 Manifest(reader.universe, template).save(manifest_file)
         except IOError as error:
-            print >> sys.stderr, "Unable to open %s: %s (error %d)" % (
-                error.filename, error.strerror, error.errno)
+            print("Unable to open %s: %s (error %d)" % (
+                error.filename, error.strerror, error.errno), file=sys.stderr)
             return 1
         except Exception:
-            print >> sys.stderr, "Unable to document this universe. Please send the following error message to dave.peckham@me.com"
+            print("Unable to document this universe. Please send the following error message to dave.peckham@me.com", file=sys.stderr)
             raise
 
-    except Usage, err:
-        print >> sys.stderr, sys.argv[0].split("/")[-1] + version() +": " + str(err.msg)
+    except Usage as err:
+        print(sys.argv[0].split("/")[-1] + version() +": " + str(err.msg), file=sys.stderr)
         # print >> sys.stderr, "\t for help use --help"
         return 2
 

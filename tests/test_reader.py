@@ -5,12 +5,17 @@ test_reader.py
 
 Created by David Peckham on 2009-09-20.
 Copyright (c) 2009 David Peckham. All rights reserved.
+
+Enhanced by Sanjay Sharma (indoos@gmail.com) 2025-10-17.
 """
 
 import datetime
 import os
 import sys
 import unittest
+
+# Add the local pyunv directory to the path so tests use the enhanced version
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from pyunv.universe import Universe
 from pyunv.reader import Reader
@@ -141,10 +146,88 @@ class SampleUniverseXIR2(unittest.TestCase):
         self.assertEqual(self.universe.statistics['conditions'], 6)
 
     def test_custom_parameters(self):
-        self.assert_(self.universe.custom_parameters['SAMPLE_PARAMETER1'] == '999333')
-        self.assert_(self.universe.custom_parameters['OLAP_UNIVERSE'] == 'No')
-        self.assert_(self.universe.custom_parameters['ANSI92'] == 'YES')
-        self.assert_(self.universe.custom_parameters['SAMPLE_PARAMETER2'] == '999222')
+        self.assertEqual(self.universe.custom_parameters['SAMPLE_PARAMETER1'], '999333')
+        self.assertEqual(self.universe.custom_parameters['OLAP_UNIVERSE'], 'No')
+        self.assertEqual(self.universe.custom_parameters['ANSI92'], 'YES')
+        self.assertEqual(self.universe.custom_parameters['SAMPLE_PARAMETER2'], '999222')
+            
+    def test_manifest(self):
+        Manifest(self.universe).save(open(self.filename+'.txt', 'w'))
+        
+
+class SampleUniverseEFashion(unittest.TestCase):
+    
+    def setUp(self):
+        super(SampleUniverseEFashion, self).setUp()
+        self.filename = 'tests/universes/eFashion.unv'
+        self.reader = Reader(open(self.filename, 'rb'))
+        self.universe = self.reader.universe
+    
+    def tearDown(self):
+        super(SampleUniverseEFashion, self).tearDown()
+        del self.reader
+
+    # tests for universe parameters
+    
+    def test_universe_name(self):
+        self.assertEqual(self.universe.parameters.universe_name, 'eFashion')
+        
+    def test_universe_filename(self):
+        self.assertEqual(self.universe.parameters.universe_filename, 'eFashion')
+        
+    def test_class_count(self):
+        self.assertEqual(self.universe.statistics['classes'], 6)
+            
+    def test_object_count(self):
+        self.assertEqual(self.universe.statistics['objects'], 41)
+            
+    def test_table_count(self):
+        self.assertEqual(self.universe.statistics['tables'], 4)
+            
+    def test_validation_errors_count(self):
+        self.assertEqual(len(self.universe.validation_errors), 39)
+            
+    def test_cross_references_count(self):
+        self.assertEqual(len(self.universe.cross_references), 29)
+            
+    def test_manifest(self):
+        Manifest(self.universe).save(open(self.filename+'.txt', 'w'))
+
+
+class SampleUniverseUnivers5(unittest.TestCase):
+    
+    def setUp(self):
+        super(SampleUniverseUnivers5, self).setUp()
+        self.filename = 'tests/universes/Univers5.unv'
+        self.reader = Reader(open(self.filename, 'rb'))
+        self.universe = self.reader.universe
+    
+    def tearDown(self):
+        super(SampleUniverseUnivers5, self).tearDown()
+        del self.reader
+
+    # tests for universe parameters
+    
+    def test_universe_name(self):
+        self.assertEqual(self.universe.parameters.universe_name, 'Univers5')
+        
+    def test_universe_filename(self):
+        self.assertEqual(self.universe.parameters.universe_filename, 'Univers5')
+        
+    def test_class_count(self):
+        self.assertEqual(self.universe.statistics['classes'], 1)
+            
+    def test_object_count(self):
+        self.assertEqual(self.universe.statistics['objects'], 5)
+            
+    def test_table_count(self):
+        self.assertEqual(self.universe.statistics['tables'], 1)
+            
+    def test_validation_errors_count(self):
+        self.assertEqual(len(self.universe.validation_errors), 0)
+            
+    def test_cross_references_count(self):
+        self.assertEqual(len(self.universe.cross_references), 5)
             
     def test_manifest(self):
         Manifest(self.universe).save(open(self.filename+'.txt', 'w'))
