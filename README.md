@@ -3,7 +3,7 @@
 [![Python Version](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-LGPL--2.1-green.svg)](https://www.gnu.org/licenses/lgpl-2.1.html)
 
-PyUnv is a comprehensive Python library for parsing and documenting SAP BusinessObjects universe (`.unv`) files. It extracts extensive metadata and provides advanced analysis capabilities to help you understand, validate, and document your BusinessObjects universes.
+PyUnv is a comprehensive Python library for parsing and documenting SAP BusinessObjects universe (`.unv`) files. It extracts extensive metadata and provides advanced analysis capabilities to help you understand, validate, and document your BusinessObjects universes. It is a fork of https://github.com/davidpeckham/pyunv for python3 support and wider SAP BO Universe parsing.
 
 ## 🚀 Key Features
 
