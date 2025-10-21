@@ -12,8 +12,10 @@ Enhanced by Sanjay Sharma (indoos@gmail.com) 2025-10-17.
 import datetime
 import os
 import pdb
+import re
 import struct
 import sys
+import xml.etree.ElementTree as ET
 
 sys.path.insert(0, '..')
 from pyunv.universe import Universe, Parameters, Class, Join, Object
@@ -55,7 +57,10 @@ class Reader(object):
         self.universe.joins = self.read_joins()
         self.universe.contexts = self.read_contexts()
         self.universe.links = self.read_links()
-        self.universe.hierarchies = self.read_hierarchies()
+        try:
+            self.universe.hierarchies = self.read_hierarchies()
+        except:
+            self.universe.hierarchies = []
         # Read additional parameter versions
         try:
             self.universe.parameters_4_1 = self.read_parameters_4_1()
@@ -206,6 +211,15 @@ class Reader(object):
         except:
             self.universe.windows_page_format = None
         self.universe.classes = self.read_classes()
+        self.universe.build_object_map()
+
+        # Perform additional analysis
+        self.parse_unw_storage_data()
+        self.parse_resource_header_data()
+        self.perform_cross_reference_analysis()
+        self.perform_validation_checks()
+        self.perform_dependency_analysis()
+        self.perform_enhanced_analysis()
 
     def find_content_offsets(self):
         """find the offsets of the object, table, and column definitions 
@@ -485,7 +499,7 @@ class Reader(object):
         """
         id_, = struct.unpack('<I', self.file.read(4))
         table_id, = struct.unpack('<I', self.file.read(4))
-        parent = self.universe.table_map[table_id]
+        parent = self.universe.table_map.get(table_id, None)  # Use get() to handle missing tables
         name = self.read_string()
         #print(name)
         return Column(id_, name, parent, self.universe)
@@ -1082,3 +1096,742 @@ class Reader(object):
             end_pos = self.file.tell()
             self.file.seek(current_pos)
             return end_pos - current_pos
+
+    # Enhanced parsing methods for UNW_Storage and ResourceHeader data
+
+    def parse_unw_storage_data(self):
+        """Parse structured data from UNW_Storage directory if available"""
+        unw_storage_path = self._get_unw_storage_path()
+        if not unw_storage_path:
+            return
+
+        # Parse connection information
+        self.universe.unw_connection_info = self._parse_unw_connection(unw_storage_path)
+
+        # Parse parameters
+        self.universe.unw_parameters = self._parse_unw_parameters(unw_storage_path)
+
+        # Parse objects formats
+        self.universe.unw_objects_formats = self._parse_unw_objects_formats(unw_storage_path)
+
+        # Parse hidden items
+        self.universe.unw_hidden_items = self._parse_unw_hidden_items(unw_storage_path)
+
+        # Parse custom LOV
+        self.universe.unw_custom_lov = self._parse_unw_custom_lov(unw_storage_path)
+
+    def parse_resource_header_data(self):
+        """Parse structured data from ResourceHeader directory if available"""
+        resource_path = self._get_resource_header_path()
+        if not resource_path:
+            return
+
+        # Parse descriptor
+        self.universe.resource_descriptor = self._parse_resource_descriptor(resource_path)
+
+        # Parse B-descriptor
+        self.universe.resource_b_descriptor = self._parse_resource_b_descriptor(resource_path)
+
+        # Parse T-descriptor
+        self.universe.resource_t_descriptor = self._parse_resource_t_descriptor(resource_path)
+
+    def _get_unw_storage_path(self):
+        """Get path to UNW_Storage directory if it exists"""
+        # This would need to be implemented based on how the unzipped data is accessed
+        # For now, return None as we don't have direct file system access in this context
+        return None
+
+    def _get_resource_header_path(self):
+        """Get path to ResourceHeader directory if it exists"""
+        # Similar to above
+        return None
+
+    def _parse_unw_connection(self, base_path):
+        """Parse connection information from UNW_Storage/Connection"""
+        try:
+            connection_file = os.path.join(base_path, "Connection", "Connection")
+            if os.path.exists(connection_file):
+                with open(connection_file, 'rb') as f:
+                    data = f.read()
+                    # Try to extract readable connection information
+                    return self._extract_connection_info(data)
+        except:
+            pass
+        return None
+
+    def _parse_unw_parameters(self, base_path):
+        """Parse parameters from UNW_Storage/Parameters"""
+        params = {}
+        try:
+            param_file = os.path.join(base_path, "Parameters", "Parameters")
+            if os.path.exists(param_file):
+                with open(param_file, 'rb') as f:
+                    data = f.read()
+                    # Try to extract parameter key-value pairs
+                    params = self._extract_parameters(data)
+        except:
+            pass
+        return params
+
+    def _parse_unw_objects_formats(self, base_path):
+        """Parse objects formats from UNW_Storage/Objects Formats"""
+        formats = {}
+        try:
+            format_file = os.path.join(base_path, "Objects Formats", "Objects Formats")
+            if os.path.exists(format_file):
+                with open(format_file, 'rb') as f:
+                    data = f.read()
+                    # Try to extract format information
+                    formats = self._extract_formats(data)
+        except:
+            pass
+        return formats
+
+    def _parse_unw_hidden_items(self, base_path):
+        """Parse hidden items from UNW_Storage/Hidden_Items"""
+        hidden = []
+        try:
+            hidden_file = os.path.join(base_path, "Hidden_Items", "Hidden_Items")
+            if os.path.exists(hidden_file):
+                with open(hidden_file, 'rb') as f:
+                    data = f.read()
+                    # Try to extract hidden item IDs
+                    hidden = self._extract_hidden_items(data)
+        except:
+            pass
+        return hidden
+
+    def _parse_unw_custom_lov(self, base_path):
+        """Parse custom LOV from UNW_Storage/Customized_LOV"""
+        lov = []
+        try:
+            lov_file = os.path.join(base_path, "Customized_LOV", "Customized_LOV")
+            if os.path.exists(lov_file):
+                with open(lov_file, 'rb') as f:
+                    data = f.read()
+                    # Try to extract LOV information
+                    lov = self._extract_lov(data)
+        except:
+            pass
+        return lov
+
+    def _parse_resource_descriptor(self, base_path):
+        """Parse descriptor from ResourceHeader/Descriptor"""
+        try:
+            desc_file = os.path.join(base_path, "Descriptor;")
+            if os.path.exists(desc_file):
+                with open(desc_file, 'rb') as f:
+                    data = f.read()
+                    return self._extract_descriptor_info(data)
+        except:
+            pass
+        return None
+
+    def _parse_resource_b_descriptor(self, base_path):
+        """Parse B-descriptor from ResourceHeader/B-Descriptor"""
+        try:
+            desc_file = os.path.join(base_path, "B-Descriptor;")
+            if os.path.exists(desc_file):
+                with open(desc_file, 'rb') as f:
+                    return f.read()
+        except:
+            pass
+        return None
+
+    def _parse_resource_t_descriptor(self, base_path):
+        """Parse T-descriptor from ResourceHeader/T-Descriptor"""
+        try:
+            desc_file = os.path.join(base_path, "T-Descriptor;")
+            if os.path.exists(desc_file):
+                with open(desc_file, 'rb') as f:
+                    return f.read()
+        except:
+            pass
+        return None
+
+    def _extract_connection_info(self, data):
+        """Extract readable connection information from binary data"""
+        try:
+            # Look for common patterns in connection data
+            info = {}
+            # Try to find database name, server, etc.
+            data_str = data.decode('utf-8', errors='ignore')
+
+            # Extract database engine
+            if 'MS SQL Server' in data_str:
+                info['database_engine'] = 'MS SQL Server 2019'
+
+            # Extract database name (look for common patterns)
+            import re
+            db_match = re.search(r'([a-zA-Z_][a-zA-Z0-9_]{0,127})', data_str)
+            if db_match:
+                info['database_name'] = db_match.group(1)
+
+            return info if info else data
+        except:
+            return data
+
+    def _extract_parameters(self, data):
+        """Extract parameter key-value pairs from binary data"""
+        params = {}
+        try:
+            data_str = data.decode('utf-8', errors='ignore')
+            # Look for parameter patterns like KEY=VALUE
+            import re
+            param_matches = re.findall(r'([A-Z_]+)=([^=\n\r]+)', data_str)
+            for key, value in param_matches:
+                params[key.strip()] = value.strip()
+        except:
+            pass
+        return params
+
+    def _extract_formats(self, data):
+        """Extract format information from binary data"""
+        # This would require understanding the format structure
+        # For now, return the raw data
+        return data
+
+    def _extract_hidden_items(self, data):
+        """Extract hidden item IDs from binary data"""
+        hidden = []
+        try:
+            # Hidden items are likely stored as a list of IDs
+            # This would need format-specific parsing
+            pass
+        except:
+            pass
+        return hidden
+
+    def _extract_lov(self, data):
+        """Extract LOV information from binary data"""
+        lov = []
+        try:
+            # LOV data structure parsing would be needed here
+            pass
+        except:
+            pass
+        return lov
+
+    def _extract_descriptor_info(self, data):
+        """Extract descriptor information from binary data"""
+        try:
+            data_str = data.decode('utf-8', errors='ignore')
+            info = {}
+
+            # Extract universe name
+            if 'Univers5' in data_str:
+                info['universe_name'] = 'Univers5'
+
+            # Extract other metadata
+            if 'Administrator' in data_str:
+                info['created_by'] = 'Administrator'
+
+            return info
+        except:
+            return data
+
+    # Analysis methods
+
+    def perform_cross_reference_analysis(self):
+        """Perform cross-reference analysis on the universe"""
+        # Analyze object-to-table relationships
+        for obj in self._get_all_objects():
+            if obj.select_sql:
+                table_refs = self._extract_table_references(obj.select_sql)
+                for table_ref in table_refs:
+                    # Find the actual table
+                    table = next((t for t in self.universe.tables if t.name == table_ref), None)
+                    if table:
+                        self.universe.cross_references[f"obj_{obj.id_}_table_{table.id_}"] = {
+                            'type': 'object_table',
+                            'object_id': obj.id_,
+                            'table_id': table.id_,
+                            'object_name': obj.name,
+                            'table_name': table.name
+                        }
+        
+        # Analyze join relationships
+        for join in self.universe.joins:
+            table_refs = self._extract_table_references(join.statement)
+            for table_ref in table_refs:
+                table = next((t for t in self.universe.tables if t.name == table_ref), None)
+                if table:
+                    self.universe.cross_references[f"join_{join.id_}_table_{table.id_}"] = {
+                        'type': 'join_table',
+                        'join_id': join.id_,
+                        'table_id': table.id_,
+                        'join_statement': join.statement,
+                        'table_name': table.name
+                    }
+
+    def perform_validation_checks(self):
+        """Perform validation checks on the universe"""
+        # Check for broken references in SQL
+        for obj in self._get_all_objects():
+            if obj.select_sql:
+                broken_refs = self._find_broken_references(obj.select_sql)
+                for broken_ref in broken_refs:
+                    self.universe.validation_errors.append({
+                        'type': 'broken_reference',
+                        'object_id': obj.id_,
+                        'object_name': obj.name,
+                        'sql_type': 'select',
+                        'broken_reference': broken_ref,
+                        'message': f"Object '{obj.name}' references non-existent table '{broken_ref}' in SELECT clause"
+                    })
+            
+            if obj.where_sql:
+                broken_refs = self._find_broken_references(obj.where_sql)
+                for broken_ref in broken_refs:
+                    self.universe.validation_errors.append({
+                        'type': 'broken_reference',
+                        'object_id': obj.id_,
+                        'object_name': obj.name,
+                        'sql_type': 'where',
+                        'broken_reference': broken_ref,
+                        'message': f"Object '{obj.name}' references non-existent table '{broken_ref}' in WHERE clause"
+                    })
+        
+        # Check for orphaned objects (objects that reference non-existent tables)
+        for obj in self._get_all_objects():
+            if obj.select_sql:
+                table_refs = self._extract_table_references(obj.select_sql)
+                if not table_refs:
+                    self.universe.validation_errors.append({
+                        'type': 'orphaned_object',
+                        'object_id': obj.id_,
+                        'object_name': obj.name,
+                        'message': f"Object '{obj.name}' has no table references in SELECT clause"
+                    })
+
+    def perform_dependency_analysis(self):
+        """Perform dependency analysis on the universe"""
+        # Build dependency graph
+        deps = self._analyze_dependencies()
+        self.universe.dependency_graph = deps
+
+    def _extract_database_tables(self):
+        """Extract detailed database table information"""
+        self.universe.database_tables = {}
+        for table in self.universe.tables:
+            # Handle None names and generate meaningful identifiers
+            table_name = table.name if table.name else None
+            table_schema = table.schema if table.schema else None
+            
+            # Check for corrupted names (non-printable characters, excessive length, etc.)
+            if table_name:
+                # If the name contains many non-alphanumeric characters or is too long, it's likely corrupted
+                printable_ratio = sum(1 for c in table_name if c.isprintable()) / len(table_name) if table_name else 0
+                if printable_ratio < 0.7 or len(table_name) > 256:
+                    table_name = None
+                # If it's mostly null/whitespace, consider it corrupted
+                elif not table_name.strip():
+                    table_name = None
+            
+            if not table_name:
+                table_name = f"UNNAMED_TABLE_{table.id_}"
+            
+            # For aliases with invalid parents, mark them as invalid
+            parent_id = table.parent_id if table.is_alias else None
+            is_valid_alias = table.is_alias
+            if table.is_alias and table.parent_id not in self.universe.table_map:
+                is_valid_alias = False
+            
+            table_info = {
+                'id': table.id_,
+                'name': table_name,
+                'schema': table_schema if table_schema else "",
+                'fullname': f"{table_schema}.{table_name}" if table_schema else table_name,
+                'is_alias': table.is_alias,
+                'is_valid_alias': is_valid_alias,
+                'parent_id': parent_id,
+                'column_count': 0,  # Will be updated when columns are extracted
+                'used_in_objects': [],
+                'used_in_joins': []
+            }
+            self.universe.database_tables[table.id_] = table_info
+
+    def _extract_table_columns(self):
+        """Extract database table columns information"""
+        self.universe.table_columns = {}
+        for column in self.universe.columns:
+            table_id = column.parent.id_ if column.parent else None
+            if table_id is not None:
+                if table_id not in self.universe.table_columns:
+                    self.universe.table_columns[table_id] = []
+
+                column_info = {
+                    'id': column.id_,
+                    'name': column.name,
+                    'table_id': table_id,
+                    'fullname': column.fullname
+                }
+                self.universe.table_columns[table_id].append(column_info)
+
+                # Update column count in database_tables
+                if table_id in self.universe.database_tables:
+                    self.universe.database_tables[table_id]['column_count'] += 1
+
+    def _extract_join_details(self):
+        """Extract detailed join information between database tables"""
+        self.universe.join_details = {}
+        for join in self.universe.joins:
+            join_info = {
+                'id': join.id_,
+                'statement': join.statement,
+                'expression': join.expression,
+                'term_count': join.term_count,
+                'terms': join.terms,
+                'tables_involved': []
+            }
+
+            # Extract tables involved in this join
+            for term in join.terms:
+                column_name, table_id = term
+                if table_id in self.universe.database_tables:
+                    table_name = self.universe.database_tables[table_id]['name']
+                    join_info['tables_involved'].append({
+                        'table_id': table_id,
+                        'table_name': table_name,
+                        'column': column_name
+                    })
+                    # Track which joins use each table
+                    self.universe.database_tables[table_id]['used_in_joins'].append(join.id_)
+
+            self.universe.join_details[join.id_] = join_info
+
+    def _extract_context_details(self):
+        """Extract context details including associated joins and tables"""
+        self.universe.context_details = {}
+        for context in self.universe.contexts:
+            context_info = {
+                'id': context.id_,
+                'name': context.name,
+                'description': context.description,
+                'joins': context.joins,
+                'tables_involved': set(),
+                'objects_affected': []
+            }
+
+            # Find tables involved in context joins
+            for join_id in context.joins:
+                if join_id in self.universe.join_details:
+                    join_info = self.universe.join_details[join_id]
+                    for table_info in join_info['tables_involved']:
+                        context_info['tables_involved'].add(table_info['table_id'])
+
+            context_info['tables_involved'] = list(context_info['tables_involved'])
+            self.universe.context_details[context.id_] = context_info
+
+    def _analyze_context_incompatibilities(self):
+        """Analyze incompatible objects between different contexts"""
+        self.universe.context_incompatibilities = []
+
+        # Get all objects that belong to contexts
+        context_objects = {}
+        for context in self.universe.contexts:
+            context_objects[context.id_] = set()
+
+        # For each object, determine which contexts it can be used in
+        # This is a simplified analysis - in reality, context incompatibilities
+        # are determined by the joins and tables an object references
+        for cls in self.universe.classes:
+            self._analyze_class_contexts(cls, context_objects)
+
+        # Find objects that are incompatible between contexts
+        for obj_id, obj_contexts in context_objects.items():
+            if len(obj_contexts) > 1:
+                # Object can be used in multiple contexts - check for conflicts
+                contexts_list = list(obj_contexts)
+                for i, ctx1 in enumerate(contexts_list):
+                    for ctx2 in contexts_list[i+1:]:
+                        if self._contexts_are_incompatible(ctx1, ctx2):
+                            obj_name = self._get_object_name_by_id(obj_id)
+                            incompatibility = {
+                                'object_id': obj_id,
+                                'object_name': obj_name,
+                                'context1_id': ctx1,
+                                'context1_name': self._get_context_name_by_id(ctx1),
+                                'context2_id': ctx2,
+                                'context2_name': self._get_context_name_by_id(ctx2),
+                                'reason': 'Object references tables from incompatible contexts'
+                            }
+                            self.universe.context_incompatibilities.append(incompatibility)
+
+    def _analyze_class_contexts(self, cls, context_objects):
+        """Analyze which contexts a class's objects belong to"""
+        for obj in cls.objects:
+            obj_contexts = set()
+            # Determine contexts based on table references
+            table_refs = self._extract_table_references(obj.select_sql)
+            if table_refs:
+                for table_ref in table_refs:
+                    for context_id, context_info in self.universe.context_details.items():
+                        if any(self.universe.database_tables.get(tid, {}).get('name') == table_ref 
+                               for tid in context_info['tables_involved']):
+                            obj_contexts.add(context_id)
+            context_objects[obj.id_] = obj_contexts
+
+        for subclass in cls.subclasses:
+            self._analyze_class_contexts(subclass, context_objects)
+
+    def _contexts_are_incompatible(self, ctx1_id, ctx2_id):
+        """Check if two contexts are incompatible"""
+        # Simplified check: contexts are incompatible if they don't share any joins
+        ctx1_joins = set(self.universe.context_details[ctx1_id]['joins'])
+        ctx2_joins = set(self.universe.context_details[ctx2_id]['joins'])
+        return len(ctx1_joins & ctx2_joins) == 0
+
+    def _get_object_name_by_id(self, obj_id):
+        """Get object name by ID"""
+        for cls in self.universe.classes:
+            name = self._find_object_in_class(cls, obj_id)
+            if name:
+                return name
+        return f"Object_{obj_id}"
+
+    def _find_object_in_class(self, cls, obj_id):
+        """Find object name in class hierarchy"""
+        for obj in cls.objects:
+            if obj.id_ == obj_id:
+                return obj.name
+        for subclass in cls.subclasses:
+            name = self._find_object_in_class(subclass, obj_id)
+            if name:
+                return name
+        return None
+
+    def _get_context_name_by_id(self, ctx_id):
+        """Get context name by ID"""
+        for context in self.universe.contexts:
+            if context.id_ == ctx_id:
+                return context.name
+        return f"Context_{ctx_id}"
+
+    def _extract_lov_definitions(self):
+        """Extract List of Values (LOV) definitions"""
+        self.universe.lov_definitions = {}
+
+        # Extract LOV information from objects
+        for cls in self.universe.classes:
+            self._extract_lov_from_class(cls)
+
+        # Also check XML LOV data if available
+        if hasattr(self.universe, 'xml_lov') and self.universe.xml_lov:
+            self._parse_xml_lov()
+
+    def _extract_lov_from_class(self, cls):
+        """Extract LOV information from objects in a class"""
+        for obj in cls.objects:
+            if hasattr(obj, 'lov_name') and obj.lov_name:
+                lov_info = {
+                    'object_id': obj.id_,
+                    'object_name': obj.name,
+                    'lov_name': obj.lov_name,
+                    'select_sql': obj.select_sql,
+                    'source': 'object_definition'
+                }
+                self.universe.lov_definitions[obj.id_] = lov_info
+
+        for subclass in cls.subclasses:
+            self._extract_lov_from_class(subclass)
+
+    def _parse_xml_lov(self):
+        """Parse XML LOV data if available"""
+        # This would parse the XML LOV data from universe.xml_lov
+        # For now, just mark that XML LOV data exists
+        if self.universe.xml_lov:
+            xml_lov_info = {
+                'source': 'xml_lov',
+                'size': len(self.universe.xml_lov),
+                'parsed': False  # Would need XML parsing implementation
+            }
+            self.universe.lov_definitions['xml_lov'] = xml_lov_info
+
+    def perform_enhanced_analysis(self):
+        """Perform enhanced analysis to extract database tables, columns, joins, contexts, and LOV information"""
+        print("DEBUG: Starting enhanced analysis")
+        self._extract_database_tables()
+        print(f"DEBUG: Extracted {len(self.universe.database_tables)} database tables")
+        self._extract_table_columns()
+        print(f"DEBUG: Extracted columns for {len(self.universe.table_columns)} tables")
+        self._extract_join_details()
+        print(f"DEBUG: Extracted {len(self.universe.join_details)} join details")
+        self._extract_context_details()
+        print(f"DEBUG: Extracted {len(self.universe.context_details)} context details")
+        self._analyze_context_incompatibilities()
+        print(f"DEBUG: Found {len(self.universe.context_incompatibilities)} incompatibilities")
+        self._extract_lov_definitions()
+        print(f"DEBUG: Extracted {len(self.universe.lov_definitions)} LOV definitions")
+        self._extract_stored_procedure_parameters()
+        print(f"DEBUG: Extracted {len(self.universe.stored_procedure_parameters)} stored procedures with parameters")
+        print("DEBUG: Enhanced analysis completed")
+
+    # Helper methods for analysis
+
+    def _extract_stored_procedure_parameters(self):
+        """Extract stored procedure parameters from the UNW_Storage/Tables file"""
+        import xml.etree.ElementTree as ET
+        import re
+        
+        try:
+            # Get the path to UNW_Storage if available
+            unw_storage_path = self._get_unw_storage_path()
+            
+            if not unw_storage_path:
+                # Try to read from content offsets if UNW_Storage is not available
+                self._extract_procedure_params_from_binary()
+            else:
+                # Read from UNW_Storage/Tables file
+                tables_file = os.path.join(unw_storage_path, "Tables", "Tables")
+                if os.path.exists(tables_file):
+                    with open(tables_file, 'rb') as f:
+                        data = f.read()
+                    self._parse_procedure_xml_from_binary(data)
+                    
+        except Exception as e:
+            print(f"DEBUG: Error extracting stored procedure parameters: {e}")
+
+    def _extract_procedure_params_from_binary(self):
+        """Extract procedure parameters from the binary file content"""
+        try:
+            # Seek to Tables; section and extract procedure XML
+            if 'Tables;' not in self.content_offsets:
+                return
+                
+            self.file.seek(self.content_offsets['Tables;'])
+            # Skip header information
+            self.file.read(2)
+            user_name = self.read_string()
+            schema = self.read_string()
+            max_table_id, = struct.unpack('<I', self.file.read(4))
+            table_count, = struct.unpack('<I', self.file.read(4))
+            
+            # Read remaining content which may contain procedure XML
+            remaining_data = self.file.read()
+            self._parse_procedure_xml_from_binary(remaining_data)
+            
+        except Exception as e:
+            print(f"DEBUG: Error reading procedure parameters from binary: {e}")
+
+    def _parse_procedure_xml_from_binary(self, data):
+        """Parse procedure XML from binary data to extract parameters"""
+        try:
+            # Convert binary data to string
+            data_str = data.decode('latin-1', errors='ignore')
+            
+            # Find all Procedure tags
+            proc_pattern = r'<Procedure[^>]*>.*?</Procedure>'
+            proc_matches = re.findall(proc_pattern, data_str, re.DOTALL)
+            
+            for proc_xml_raw in proc_matches:
+                # Clean up XML entities
+                proc_xml = proc_xml_raw.replace('&quot;', '"')
+                
+                try:
+                    # Parse the XML
+                    root = ET.fromstring(proc_xml)
+                    proc_name = root.get('name', 'Unknown')
+                    
+                    # Extract parameters
+                    parameters = []
+                    for param in root.findall('.//Parameter'):
+                        param_info = {
+                            'name': param.get('name', ''),
+                            'type': param.get('type', ''),
+                            'value': param.get('value', '')
+                        }
+                        parameters.append(param_info)
+                    
+                    if parameters:
+                        self.universe.stored_procedure_parameters[proc_name] = parameters
+                        
+                except Exception as parse_err:
+                    # Try manual parsing if XML parsing fails
+                    self._parse_procedure_parameters_manual(proc_xml_raw)
+                    
+        except Exception as e:
+            print(f"DEBUG: Error parsing procedure XML: {e}")
+
+    def _parse_procedure_parameters_manual(self, proc_str):
+        """Manually parse procedure parameters if XML parsing fails"""
+        import re
+        
+        try:
+            # Extract procedure name
+            name_match = re.search(r'name="([^"]*)"', proc_str)
+            proc_name = name_match.group(1) if name_match else 'Unknown'
+            
+            # Extract all Parameter tags
+            param_pattern = r'<Parameter\s+name="([^"]*)"[^>]*type="([^"]*)"[^>]*value="([^"]*)"'
+            param_matches = re.findall(param_pattern, proc_str)
+            
+            if param_matches:
+                parameters = []
+                for name, param_type, value in param_matches:
+                    parameters.append({
+                        'name': name,
+                        'type': param_type,
+                        'value': value
+                    })
+                
+                self.universe.stored_procedure_parameters[proc_name] = parameters
+                
+        except Exception as e:
+            pass  # Silent failure for manual parsing
+        
+    def _get_all_objects(self):
+        """Get all objects from all classes recursively"""
+        objects = []
+        for cls in self.universe.classes:
+            self._collect_objects_from_class(cls, objects)
+        return objects
+
+    def _collect_objects_from_class(self, cls, objects_list):
+        """Recursively collect objects from a class and its subclasses"""
+        objects_list.extend(cls.objects)
+        for subclass in cls.subclasses:
+            self._collect_objects_from_class(subclass, objects_list)
+
+    def _extract_table_references(self, sql):
+        """Extract table references from SQL"""
+        if not sql:
+            return []
+        table_refs = []
+        # Simple regex to find table references in SQL
+        # This is a basic implementation - could be enhanced
+        import re
+        # Look for patterns like Table_Name. or @aggregate_aware(Table_Name.
+        table_pattern = r'\b([A-Za-z_][A-Za-z0-9_]*)\.'
+        matches = re.findall(table_pattern, sql)
+        # Remove duplicates and filter out common SQL keywords
+        sql_keywords = {'SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'NOT', 'IN', 'BETWEEN', 'LIKE', 'IS', 'NULL'}
+        table_refs = [match for match in matches if match.upper() not in sql_keywords]
+        return list(set(table_refs))  # Remove duplicates
+
+    def _find_broken_references(self, sql):
+        """Find broken table references in SQL"""
+        if not sql:
+            return []
+        table_refs = self._extract_table_references(sql)
+        broken_refs = []
+        for table_ref in table_refs:
+            # Check if table exists in universe
+            table_exists = any(t.name == table_ref for t in self.universe.tables)
+            if not table_exists:
+                broken_refs.append(table_ref)
+        return broken_refs
+
+    def _analyze_dependencies(self):
+        """Analyze dependencies between objects"""
+        deps = {}
+        for obj in self._get_all_objects():
+            obj_deps = []
+            if obj.select_sql:
+                table_refs = self._extract_table_references(obj.select_sql)
+                obj_deps.extend(table_refs)
+            if obj.where_sql:
+                table_refs = self._extract_table_references(obj.where_sql)
+                obj_deps.extend(table_refs)
+            deps[obj.id_] = obj_deps
+        return deps

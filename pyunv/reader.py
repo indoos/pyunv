@@ -1414,13 +1414,37 @@ class Reader(object):
         """Extract detailed database table information"""
         self.universe.database_tables = {}
         for table in self.universe.tables:
+            # Handle None names and generate meaningful identifiers
+            table_name = table.name if table.name else None
+            table_schema = table.schema if table.schema else None
+            
+            # Check for corrupted names (non-printable characters, excessive length, etc.)
+            if table_name:
+                # If the name contains many non-alphanumeric characters or is too long, it's likely corrupted
+                printable_ratio = sum(1 for c in table_name if c.isprintable()) / len(table_name) if table_name else 0
+                if printable_ratio < 0.7 or len(table_name) > 256:
+                    table_name = None
+                # If it's mostly null/whitespace, consider it corrupted
+                elif not table_name.strip():
+                    table_name = None
+            
+            if not table_name:
+                table_name = f"UNNAMED_TABLE_{table.id_}"
+            
+            # For aliases with invalid parents, mark them as invalid
+            parent_id = table.parent_id if table.is_alias else None
+            is_valid_alias = table.is_alias
+            if table.is_alias and table.parent_id not in self.universe.table_map:
+                is_valid_alias = False
+            
             table_info = {
                 'id': table.id_,
-                'name': table.name,
-                'schema': table.schema,
-                'fullname': table.fullname,
+                'name': table_name,
+                'schema': table_schema if table_schema else "",
+                'fullname': f"{table_schema}.{table_name}" if table_schema else table_name,
                 'is_alias': table.is_alias,
-                'parent_id': table.parent_id if table.is_alias else None,
+                'is_valid_alias': is_valid_alias,
+                'parent_id': parent_id,
                 'column_count': 0,  # Will be updated when columns are extracted
                 'used_in_objects': [],
                 'used_in_joins': []
