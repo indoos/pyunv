@@ -20,16 +20,38 @@ class Manifest:
     
     def __init__(self, universe, template=None):
         self.universe = universe
+        self.template = None
+        
         if template:
             self.template = template
         else:
-            self.template = 'manifest.mako'
+            # Try to find manifest.mako in the package directory
+            try:
+                # Get the directory of the current module
+                module_path = os.path.dirname(__file__)
+                template_path = os.path.join(module_path, 'manifest.mako')
+                if os.path.exists(template_path):
+                    self.template = template_path
+                else:
+                    # Fallback: assume manifest.mako is in current directory
+                    self.template = 'manifest.mako'
+            except Exception:
+                # Fallback: assume manifest.mako is in current directory
+                self.template = 'manifest.mako'
 
     def save(self, f):
         """docstring for write_manifest"""
-        template = Template(filename=self.template, 
-            encoding_errors='replace')
-        f.write(template.render(universe=self.universe))
+        if self.template:
+            try:
+                template = Template(filename=self.template, 
+                    encoding_errors='replace')
+                f.write(template.render(universe=self.universe))
+            except FileNotFoundError:
+                raise RuntimeError("No template found at: " + self.template + 
+                    ". Ensure manifest.mako is installed with the pyunv package.")
+        else:
+            raise RuntimeError("No template found for Manifest. " + 
+                "Ensure manifest.mako is installed with the pyunv package.")
 
 
 class ManifestTests(unittest.TestCase):
