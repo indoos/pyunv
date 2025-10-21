@@ -77,3 +77,9 @@
     
     Contexts
     
+
+    Stored Procedure Parameters
+
+            GetEmployeesByDeptAndSalary;1:
+                - Name: @DeptID, Type: SInt32, Default Value: 1
+                - Name: @MinSalary, Type: Float64, Default Value: 35000

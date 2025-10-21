@@ -98,28 +98,28 @@
             Lines   id: 165, visible: True, description: Product line. Each line contains a set of categories., select: @aggregate_aware(Agg_yr_qt_rn_st_ln_ca_sr.Line,Article_lookup.Family_name,Article_Color_Lookup.Family_name), where: None
             Category   id: 508, visible: True, description: Each category contains the individual SKU codes (and product descriptions)., select: @aggregate_aware(Agg_yr_qt_rn_st_ln_ca_sr.Category,Article_lookup.Category,Article_Color_Lookup.Category), where: None
             SKU number   id: 216, visible: True, description: Stock Keeping Unit number (SKU).The lowest level of product description., select: @aggregate_aware(Article_lookup.Article_id,Article_Color_Lookup.Article_id), where: None
-            Label   id: 468, visible: True, description: Detailed information about each product, select: {fn concat(.Criteria_Type_Label,{fn concat(': ',.Criteria_label)})}, where: None
+            Label   id: 468, visible: True, description: Detailed information about each product, select: {fn concat(UnknownTable_9.Criteria_Type_Label,{fn concat(': ',UnknownTable_9.Criteria_label)})}, where: None
             SKU desc   id: 152, visible: True, description: Stock Keeping Unit description (SKU). Lowest level of product description. Each product comes in several different colors., select: @aggregate_aware(Article_lookup.Article_label,Article_Color_Lookup.Article_label), where: None
-            Color   id: 153, visible: True, description: Color of an article. Each SKU number has many color variations (there is not a unique SKU for each color). Color is not compatible with Product Promotions, only SKU., select: .Color_label, where: None
-            Color number   id: 440, visible: True, description: Official color number. Object incompatible with Product Promotions., select: .Color_code, where: None
+            Color   id: 153, visible: True, description: Color of an article. Each SKU number has many color variations (there is not a unique SKU for each color). Color is not compatible with Product Promotions, only SKU., select: UnknownTable_7.Color_label, where: None
+            Color number   id: 440, visible: True, description: Official color number. Object incompatible with Product Promotions., select: UnknownTable_7.Color_code, where: None
             Unit Price MSRP   id: 154, visible: True, description: This is the manufacturers suggested retail price per SKU and color., select: @aggregate_aware(Article_lookup.Sale_price,Article_Color_Lookup.Sale_price), where: None
             Extended price   id: 194, visible: True, description: The extended price let's you display the sum of prices over another dimension (such as outlet). When used with SKU number all the color variations (of each SKU) are added together., select: @aggregate_aware(sum(Article_lookup.Sale_price),sum(Article_Color_Lookup.Sale_price)), where: None
             Sold at (unit price)   id: 323, visible: True, description: This is the actual unit price per SKU obtained at sale time (i.e. Revenue/Quantity), select: IIf(Measures.Sales revenue>0,    IIf(Measures.Quantity sold>=0,       Measures.Sales revenue/Measures.Quantity sold)), where: None
                       
         Promotions
-            Promotion (y/n)   id: 266, visible: True, description: Promotion flag (yes or no) by SKU unit., select: .Promotion_flag, where: None
-            Print   id: 267, visible: True, description: Appear in print (yes or no)?, select: .print_flag, where: None
-            Radio   id: 268, visible: True, description: Appear in radio (yes or no)?, select: .radio_flag, where: None
-            Television   id: 269, visible: True, description: Appear on television (yes or no)?, select: .television_flag, where: None
-            Direct mail   id: 270, visible: True, description: Appear in direct mail (yes or no)?, select: .direct_mail_flag, where: None
-            Duration   id: 261, visible: True, description: Duration in weeks of promotion., select: .Duration, where: None
-            Promotion Cost USD   id: 262, visible: True, description: Cost of promoting the SKU (in US dollars)., select: sum(.promotion_cost), where: None
+            Promotion (y/n)   id: 266, visible: True, description: Promotion flag (yes or no) by SKU unit., select: UnknownTable_16.Promotion_flag, where: None
+            Print   id: 267, visible: True, description: Appear in print (yes or no)?, select: UnknownTable_16.print_flag, where: None
+            Radio   id: 268, visible: True, description: Appear in radio (yes or no)?, select: UnknownTable_16.radio_flag, where: None
+            Television   id: 269, visible: True, description: Appear on television (yes or no)?, select: UnknownTable_16.television_flag, where: None
+            Direct mail   id: 270, visible: True, description: Appear in direct mail (yes or no)?, select: UnknownTable_16.direct_mail_flag, where: None
+            Duration   id: 261, visible: True, description: Duration in weeks of promotion., select: UnknownTable_15.Duration, where: None
+            Promotion Cost USD   id: 262, visible: True, description: Cost of promoting the SKU (in US dollars)., select: sum(UnknownTable_15.promotion_cost), where: None
                       
         Measures
             Sales revenue   id: 147, visible: True, description: Sales revenue $ - $ revenue of SKU sold, select: @aggregate_aware(sum(Agg_yr_qt_rn_st_ln_ca_sr.Sales_revenue),sum(Agg_yr_qt_mt_mn_wk_rg_cy_sn_sr_qt_ma.Sales_revenue),sum(Shop_facts.Amount_sold)), where: None
             Quantity sold   id: 148, visible: True, description: Quantity sold - number of SKU sold, select: @aggregate_aware(sum(Agg_yr_qt_mt_mn_wk_rg_cy_sn_sr_qt_ma.Quantity_sold),sum(Shop_facts.Quantity_sold)), where: None
             Margin   id: 146, visible: True, description: Margin $ = Revenue - Cost of sales, select: @aggregate_aware(sum(Agg_yr_qt_mt_mn_wk_rg_cy_sn_sr_qt_ma.Margin),sum(Shop_facts.Margin)), where: None
-            Discount   id: 191, visible: True, description: Total discount of a SKU. Discount= Qty * Unit Price - Revenue.  Negative sums indicate the product was marked up (increased margin). Note discount is a calculated object (it does not exist in the fact table)., select: @aggregate_aware(sum(Shop_facts.Quantity_sold * Article_lookup.Sale_price - Shop_facts.Amount_sold),sum(Shop_facts.Quantity_sold * Article_Color_Lookup.Sale_price - Shop_facts.Amount_sold)), where: .week_id=Calendar_year_lookup.Week_id
+            Discount   id: 191, visible: True, description: Total discount of a SKU. Discount= Qty * Unit Price - Revenue.  Negative sums indicate the product was marked up (increased margin). Note discount is a calculated object (it does not exist in the fact table)., select: @aggregate_aware(sum(Shop_facts.Quantity_sold * Article_lookup.Sale_price - Shop_facts.Amount_sold),sum(Shop_facts.Quantity_sold * Article_Color_Lookup.Sale_price - Shop_facts.Amount_sold)), where: UnknownTable_4.week_id=Calendar_year_lookup.Week_id
                   
     Conditions
         
@@ -137,15 +137,15 @@
         Store details
                            
         Product
-            Prompt for a line item?   id: 9, description: None, where: .Family_name IN @Prompt ('Choose a line to analyze?','A',{'Accessories','City Skirts','City Trousers','Dresses','Jackets','Leather','Outerwear','Overcoats','Shirt waist','Sweaters','Sweat-T-Shirts','Trousers'},MULTI,CONSTRAINED)
-            Which category?   id: 8, description: Prompt for the product category, where: .Category IN @Prompt ('Choose a category to analyze?','A',{'2 Pocket shirts','Belts,bags,wallets','Bermudas','Boatwear','Cardigan','Casual dresses','Day wear','Dry wear','Evening wear','Fancy fabric','Full length','Hair accessories','Hats,gloves,scarfs','Jackets','Jeans','Jewelry','Long lounge pants','Long sleeve','Lounge wear','Mini city','Night wear','Outdoor','Pants','Party pants','Samples','Shirts','Short sleeve','Skirts','Soft fabric','Sweater dresses','Sweats','T-Shirts','Turtleneck','Wet wear'},MULTI,CONSTRAINED)
-            Which product?   id: 10, description: Prompt for the product description name., where: .Article_label IN @Prompt('Choose the product descriptions to analyze:','A','Product\SKU desc',MULTI,CONSTRAINED)
+            Prompt for a line item?   id: 9, description: None, where: UnknownTable_7.Family_name IN @Prompt ('Choose a line to analyze?','A',{'Accessories','City Skirts','City Trousers','Dresses','Jackets','Leather','Outerwear','Overcoats','Shirt waist','Sweaters','Sweat-T-Shirts','Trousers'},MULTI,CONSTRAINED)
+            Which category?   id: 8, description: Prompt for the product category, where: UnknownTable_7.Category IN @Prompt ('Choose a category to analyze?','A',{'2 Pocket shirts','Belts,bags,wallets','Bermudas','Boatwear','Cardigan','Casual dresses','Day wear','Dry wear','Evening wear','Fancy fabric','Full length','Hair accessories','Hats,gloves,scarfs','Jackets','Jeans','Jewelry','Long lounge pants','Long sleeve','Lounge wear','Mini city','Night wear','Outdoor','Pants','Party pants','Samples','Shirts','Short sleeve','Skirts','Soft fabric','Sweater dresses','Sweats','T-Shirts','Turtleneck','Wet wear'},MULTI,CONSTRAINED)
+            Which product?   id: 10, description: Prompt for the product description name., where: UnknownTable_7.Article_label IN @Prompt('Choose the product descriptions to analyze:','A','Product\SKU desc',MULTI,CONSTRAINED)
                       
         Promotions
                       
         Measures
-            Sales present   id: 15, description: Sales were present. Must be combined with a detailed object to make any sense. Example Year +  'Sales Present' AND 'SKU desc=E-Watches' to see which years revenue was generated for E- Watches., where: .Amount_sold IS NOT NULL
-            Sales not present   id: 16, description: Sales were not present. Must be combined with a detailed object to make any sense. Example Year +  'Sales not Present' AND 'SKU desc=E-Watches' to see which years no revenue was generated for E- Watches., where: .Amount_sold IS NULL
+            Sales present   id: 15, description: Sales were present. Must be combined with a detailed object to make any sense. Example Year +  'Sales Present' AND 'SKU desc=E-Watches' to see which years revenue was generated for E- Watches., where: UnknownTable_4.Amount_sold IS NOT NULL
+            Sales not present   id: 16, description: Sales were not present. Must be combined with a detailed object to make any sense. Example Year +  'Sales not Present' AND 'SKU desc=E-Watches' to see which years no revenue was generated for E- Watches., where: UnknownTable_4.Amount_sold IS NULL
                   
     Hierarchies
 
@@ -174,35 +174,35 @@
         Calendar_year_lookup.Month_Name   id: 7
         Calendar_year_lookup.Mth   id: 8
         Calendar_year_lookup.Holiday_Flag   id: 9
-        None.Promotion_id   id: 10
-        None.Promotion_flag   id: 11
-        None.Print_flag   id: 12
-        None.Radio_flag   id: 13
-        None.Television_flag   id: 14
-        None.Direct_mail_flag   id: 15
-        None.agg1_id   id: 16
-        None.Yr   id: 17
-        None.Qtr   id: 18
-        None.Mth   id: 19
-        None.Month_name   id: 20
-        None.Wk   id: 21
-        None.City   id: 22
-        None.Store_name   id: 23
-        None.Sales_revenue   id: 24
-        None.Quantity_sold   id: 25
-        None.Margin   id: 26
-        None.Article_id   id: 27
-        None.Article_label   id: 28
-        None.Category   id: 29
-        None.Sale_price   id: 30
-        None.Family_name   id: 31
-        None.Family_code   id: 32
-        None.Product_promotion_facts_id   id: 33
-        None.Article_id   id: 34
-        None.Week_id   id: 35
-        None.Duration   id: 36
-        None.Promotion_id   id: 37
-        None.Promotion_cost   id: 38
+        Promotion_id   id: 10
+        Promotion_flag   id: 11
+        Print_flag   id: 12
+        Radio_flag   id: 13
+        Television_flag   id: 14
+        Direct_mail_flag   id: 15
+        agg1_id   id: 16
+        Yr   id: 17
+        Qtr   id: 18
+        Mth   id: 19
+        Month_name   id: 20
+        Wk   id: 21
+        City   id: 22
+        Store_name   id: 23
+        Sales_revenue   id: 24
+        Quantity_sold   id: 25
+        Margin   id: 26
+        Article_id   id: 27
+        Article_label   id: 28
+        Category   id: 29
+        Sale_price   id: 30
+        Family_name   id: 31
+        Family_code   id: 32
+        Product_promotion_facts_id   id: 33
+        Article_id   id: 34
+        Week_id   id: 35
+        Duration   id: 36
+        Promotion_id   id: 37
+        Promotion_cost   id: 38
         Outlet_Lookup.Shop_id   id: 39
         Outlet_Lookup.Shop_name   id: 40
         Outlet_Lookup.Address_1   id: 41
@@ -214,23 +214,23 @@
         Outlet_Lookup.Zip_code   id: 47
         Outlet_Lookup.City   id: 48
         Outlet_Lookup.State   id: 49
-        None.Shop_facts_id   id: 50
-        None.Article_id   id: 51
-        None.Color_code   id: 52
-        None.Week_id   id: 53
-        None.Shop_id   id: 54
-        None.Margin   id: 55
-        None.Amount_sold   id: 56
-        None.Quantity_sold   id: 57
-        None.Article_color_lookup_id   id: 58
-        None.Article_id   id: 59
-        None.Color_code   id: 60
-        None.Article_label   id: 61
-        None.Color_label   id: 62
-        None.Category   id: 63
-        None.Sale_price   id: 64
-        None.Family_name   id: 65
-        None.Family_code   id: 66
+        Shop_facts_id   id: 50
+        Article_id   id: 51
+        Color_code   id: 52
+        Week_id   id: 53
+        Shop_id   id: 54
+        Margin   id: 55
+        Amount_sold   id: 56
+        Quantity_sold   id: 57
+        Article_color_lookup_id   id: 58
+        Article_id   id: 59
+        Color_code   id: 60
+        Article_label   id: 61
+        Color_label   id: 62
+        Category   id: 63
+        Sale_price   id: 64
+        Family_name   id: 65
+        Family_code   id: 66
         Agg_yr_qt_rn_st_ln_ca_sr.agg2_id   id: 67
         Agg_yr_qt_rn_st_ln_ca_sr.Yr   id: 68
         Agg_yr_qt_rn_st_ln_ca_sr.Qtr   id: 69
@@ -238,26 +238,30 @@
         Agg_yr_qt_rn_st_ln_ca_sr.Line   id: 71
         Agg_yr_qt_rn_st_ln_ca_sr.Category   id: 72
         Agg_yr_qt_rn_st_ln_ca_sr.Sales_revenue   id: 73
-        None.Article_lookup_criteria_id   id: 74
-        None.Article_id   id: 75
-        None.Criteria   id: 76
-        None.Criteria_type   id: 77
-        None.Criteria_type_label   id: 78
-        None.Criteria_label   id: 79
+        Article_lookup_criteria_id   id: 74
+        Article_id   id: 75
+        Criteria   id: 76
+        Criteria_type   id: 77
+        Criteria_type_label   id: 78
+        Criteria_label   id: 79
 
     Joins
 
-        None.Promotion_id=None.Promotion_id   id: 112 
-        None.Week_id=Calendar_year_lookup.Week_id   id: 113 
-        Outlet_Lookup.Shop_id=None.Shop_id   id: 114 
-        None.Article_id=None.Article_id   id: 117 
-        None.Article_id=None.Article_id   id: 118 
-        None.Article_id=None.Article_id   id: 120 
-        None.Article_id=None.Article_id and None.Color_code=None.Color_code   id: 121 
-        None.Week_id=Calendar_year_lookup.Week_id   id: 122 
-        None.Article_id=None.Article_id   id: 125 
+        UnknownTable_16.Promotion_id=UnknownTable_15.Promotion_id   id: 112 
+        UnknownTable_15.Week_id=Calendar_year_lookup.Week_id   id: 113 
+        Outlet_Lookup.Shop_id=UnknownTable_4.Shop_id   id: 114 
+        UnknownTable_9.Article_id=UnknownTable_21.Article_id   id: 117 
+        UnknownTable_21.Article_id=UnknownTable_4.Article_id   id: 118 
+        UnknownTable_21.Article_id=UnknownTable_15.Article_id   id: 120 
+        UnknownTable_7.Article_id=UnknownTable_4.Article_id and UnknownTable_7.Color_code=UnknownTable_4.Color_code   id: 121 
+        UnknownTable_4.Week_id=Calendar_year_lookup.Week_id   id: 122 
+        UnknownTable_15.Article_id=UnknownTable_4.Article_id   id: 125 
     
     Contexts
     
         Shop facts   id: 46, description: None, joins: 114, 118, 121, 122, 125 
         Promotions   id: 45, description: None, joins: 112, 113, 117, 120 
+
+    Stored Procedure Parameters
+
+        None found

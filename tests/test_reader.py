@@ -185,7 +185,7 @@ class SampleUniverseEFashion(unittest.TestCase):
         self.assertEqual(self.universe.statistics['tables'], 4)
             
     def test_validation_errors_count(self):
-        self.assertEqual(len(self.universe.validation_errors), 39)
+        self.assertEqual(len(self.universe.validation_errors), 40)
             
     def test_cross_references_count(self):
         self.assertEqual(len(self.universe.cross_references), 29)
@@ -235,3 +235,137 @@ class SampleUniverseUnivers5(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+# Additional test class for enhanced analysis features
+class EnhancedAnalysisTests(unittest.TestCase):
+    """Test enhanced analysis features with Univers5"""
+    
+    def setUp(self):
+        super(EnhancedAnalysisTests, self).setUp()
+        self.filename = 'tests/universes/Univers5.unv'
+        self.reader = Reader(open(self.filename, 'rb'))
+        self.universe = self.reader.universe
+    
+    def tearDown(self):
+        super(EnhancedAnalysisTests, self).tearDown()
+        del self.reader
+
+    # Database Tables Tests
+    
+    def test_database_tables_extraction(self):
+        """Test that database tables are extracted during enhanced analysis"""
+        self.assertGreater(len(self.universe.database_tables), 0, 
+                          "Database tables should be extracted")
+    
+    def test_database_tables_have_required_fields(self):
+        """Test that database tables contain required metadata"""
+        if self.universe.database_tables:
+            for table_id, table_info in self.universe.database_tables.items():
+                self.assertIn('id', table_info)
+                self.assertIn('name', table_info)
+                self.assertIn('column_count', table_info)
+                self.assertIn('used_in_objects', table_info)
+                self.assertIn('used_in_joins', table_info)
+    
+    # Table Columns Tests
+    
+    def test_table_columns_extraction(self):
+        """Test that table columns are extracted"""
+        if self.universe.database_tables:
+            self.assertGreater(len(self.universe.table_columns), 0,
+                             "Table columns should be extracted if tables exist")
+    
+    def test_table_columns_have_required_fields(self):
+        """Test that table columns contain required metadata"""
+        if self.universe.table_columns:
+            for table_id, columns in self.universe.table_columns.items():
+                self.assertIsInstance(columns, list)
+                for column in columns:
+                    self.assertIn('id', column)
+                    self.assertIn('name', column)
+                    self.assertIn('table_id', column)
+                    self.assertIn('fullname', column)
+    
+    # Join Details Tests
+    
+    def test_join_details_structure(self):
+        """Test that join details structure exists"""
+        self.assertIsNotNone(self.universe.join_details)
+        self.assertIsInstance(self.universe.join_details, dict)
+    
+    def test_join_details_have_required_fields(self):
+        """Test that join details contain required fields"""
+        if self.universe.join_details:
+            for join_id, join_info in self.universe.join_details.items():
+                self.assertIn('id', join_info)
+                self.assertIn('statement', join_info)
+                self.assertIn('expression', join_info)
+                self.assertIn('tables_involved', join_info)
+    
+    # Context Details Tests
+    
+    def test_context_details_structure(self):
+        """Test that context details structure exists"""
+        self.assertIsNotNone(self.universe.context_details)
+        self.assertIsInstance(self.universe.context_details, dict)
+    
+    def test_context_details_have_required_fields(self):
+        """Test that context details contain required fields"""
+        if self.universe.context_details:
+            for ctx_id, ctx_info in self.universe.context_details.items():
+                self.assertIn('id', ctx_info)
+                self.assertIn('name', ctx_info)
+                self.assertIn('joins', ctx_info)
+                self.assertIn('tables_involved', ctx_info)
+    
+    # Context Incompatibilities Tests
+    
+    def test_context_incompatibilities_structure(self):
+        """Test that context incompatibilities structure exists"""
+        self.assertIsNotNone(self.universe.context_incompatibilities)
+        self.assertIsInstance(self.universe.context_incompatibilities, list)
+    
+    # LOV Definitions Tests
+    
+    def test_lov_definitions_structure(self):
+        """Test that LOV definitions structure exists"""
+        self.assertIsNotNone(self.universe.lov_definitions)
+        self.assertIsInstance(self.universe.lov_definitions, dict)
+    
+    # Stored Procedure Parameters Tests
+    
+    def test_stored_procedure_parameters_structure(self):
+        """Test that stored procedure parameters structure exists"""
+        self.assertIsNotNone(self.universe.stored_procedure_parameters)
+        self.assertIsInstance(self.universe.stored_procedure_parameters, dict)
+    
+    def test_stored_procedure_parameters_correct_format(self):
+        """Test stored procedure parameters have correct format"""
+        if self.universe.stored_procedure_parameters:
+            for proc_name, parameters in self.universe.stored_procedure_parameters.items():
+                self.assertIsInstance(proc_name, str, "Procedure name should be string")
+                self.assertIsInstance(parameters, list, "Parameters should be list")
+                for param in parameters:
+                    self.assertIn('name', param, "Parameter should have 'name'")
+                    self.assertIn('type', param, "Parameter should have 'type'")
+                    self.assertIn('value', param, "Parameter should have 'value'")
+    
+    def test_stored_procedure_parameters_found(self):
+        """Test that stored procedure parameters are found in Univers5"""
+        # Univers5 should have the GetEmployeesByDeptAndSalary stored procedure
+        self.assertGreater(len(self.universe.stored_procedure_parameters), 0,
+                         "Univers5 should have stored procedure parameters")
+    
+    # General Enhanced Analysis Tests
+    
+    def test_all_enhanced_analysis_structures_exist(self):
+        """Test that all enhanced analysis data structures exist"""
+        self.assertTrue(hasattr(self.universe, 'database_tables'))
+        self.assertTrue(hasattr(self.universe, 'table_columns'))
+        self.assertTrue(hasattr(self.universe, 'join_details'))
+        self.assertTrue(hasattr(self.universe, 'context_details'))
+        self.assertTrue(hasattr(self.universe, 'context_incompatibilities'))
+        self.assertTrue(hasattr(self.universe, 'lov_definitions'))
+        self.assertTrue(hasattr(self.universe, 'stored_procedure_parameters'))
+

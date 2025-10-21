@@ -113,3 +113,16 @@
     % for c in universe.contexts:
         ${c.name}   id: ${c.id_}, description: ${c.description}, joins: ${c.join_list} 
     % endfor
+
+    Stored Procedure Parameters
+
+    % if universe.stored_procedure_parameters:
+        % for proc_name, parameters in universe.stored_procedure_parameters.items():
+            ${proc_name}:
+            % for param in parameters:
+                - Name: ${param['name']}, Type: ${param['type']}, Default Value: ${param['value']}
+            % endfor
+        % endfor
+    % else:
+        None found
+    % endif

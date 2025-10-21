@@ -100,8 +100,16 @@ class Universe(object):
         self.cross_references = {}
         self.validation_errors = []
         self.dependency_graph = {}
-        self.table_map = collections.defaultdict(Table.unknown)
-        self.object_map = collections.defaultdict(Object.unknown)
+        # Enhanced analysis data
+        self.database_tables = {}
+        self.table_columns = {}
+        self.join_details = {}
+        self.context_details = {}
+        self.context_incompatibilities = []
+        self.lov_definitions = {}
+        self.stored_procedure_parameters = {}  # {procedure_name: [{name, type, value}, ...]}
+        self.table_map = {}
+        self.object_map = {}
 
     def build_table_map(self):
         """Construct a table map so we can expand where and select clauses"""
@@ -224,7 +232,11 @@ class Join(object):
     def fullterm(self, term):
         """return the fully qualified term with table and column names"""
         column_name, table_id = term
-        return '%s.%s' % (self.universe.table_map[table_id].name, column_name)
+        table = self.universe.table_map.get(table_id)
+        if table:
+            return '%s.%s' % (table.name, column_name)
+        else:
+            return 'UnknownTable_%d.%s' % (table_id, column_name)
 
 
 class Context(object):
@@ -297,11 +309,19 @@ class ObjectBase(object):
     
     def lookup_table(self, match):
         table_id = int(match.groups()[0])
-        return self.universe.table_map[table_id].name
+        table = self.universe.table_map.get(table_id)
+        if table:
+            return table.name
+        else:
+            return f"UnknownTable_{table_id}"
     
     def lookup_object(self, match):
         object_id = int(match.groups()[0])
-        return self.universe.object_map[object_id].fullname
+        obj = self.universe.object_map.get(object_id)
+        if obj:
+            return obj.fullname
+        else:
+            return f"UnknownObject_{object_id}"
     
     def expand_sql(self, sql):
         """Return the SQL with table names instead of table IDs"""
